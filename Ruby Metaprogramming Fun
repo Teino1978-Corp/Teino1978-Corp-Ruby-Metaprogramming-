@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+# This is a little something that shows off the beauty of Ruby's object model.
+
+# OK, let's first have a module that contains a class.  You might choose to
+# instantate this class and then use the makemod method to return a module
+# that was created on the fly using the symbol you passed in to the method.
+
+module A
+  class Gen
+    def initialize
+      puts 'hi'
+    end
+    def makemod(s)
+      # Now this may not feel entirely natural.  The first thing is that we
+      # specify something that inherits from Module.  By making that thing a
+      # Kernel, we're putting into the primordial class.  The first argument
+      # is the name of the thing you want to bring into existence.  In this
+      # case we take a symbol, stringify it, and captialize it per Ruby
+      # standards for Constants.  The second argument specifies what this
+      # thing should be.  In this case it should be (to steal from Perl idiom)
+      # a blessed reference is a Module.  Once you have that, you can start
+      # using module_eval on it.  Otherwise you have gotten another name for
+      # Module such that you could start doing things like:
+      #
+      # def s.to_s.capitalize
+      #   def a_method
+      #   end
+      # end
+      # 
+      # And that is some crazy nutsitude!
+      return Kernel.const_set(s.to_s.capitalize, Module.new)
+    end
+  end
+end
+
+# Generate an instance of that class
+g = A::Gen.new
+
+# Use makemod to make a Foo module
+m = g.makemod :foo
+
+# Hang some methods on that name
+m.module_eval do
+  def larry
+    puts "regal beagle"
+  end
+  def self.included(mod)
+    puts "included in #{mod}"
+  end
+end
+
+# Mix-in the freshly created module
+class Klaus
+  include Foo
+end
+
+# Create an instance
+k = Klaus.new
+
+# Call a mixed-in method -- that's way cool!
+k.larry
